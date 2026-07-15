@@ -25,3 +25,5 @@ def delete_user(headers,user_id):
 def get_user_by_id(headers,user_id):
 	"""根据用户 id 查询用户详情"""
 	return send_request(method="GET",url=f"{users_url}/{user_id}",headers=headers)
+
+

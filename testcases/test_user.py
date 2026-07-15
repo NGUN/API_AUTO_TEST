@@ -3,10 +3,12 @@ from api.user_api import get_current_user, get_users, create_user, update_user, 
 from utils.assert_utils import assert_status_code, assert_business_code, assert_data_not_none, assert_user_in_list, assert_user_not_in_list, assert_data_is_none
 from utils.data_utils import build_create_user_data
 import allure
-from data.user_data import (create_user_missing_required_field_data, create_user_missing_required_field_ids,)
+from data.user_data import (create_user_invalid_field_data, create_user_invalid_field_ids, not_exist_user_id,
+							update_not_exist_user_data, update_not_exist_user_ids, delete_not_exist_user_data, delete_not_exist_user_ids,
+							get_not_exist_user_by_id_data, get_not_exist_user_by_id_ids, create_user_duplicate_username_data, create_user_duplicate_username_ids,
+							update_username_ignored_data, update_username_ignored_ids,)
 from utils.allure_utils import attach_response
 from utils.request_utils import get_json
-
 
 @allure.feature("用户模块")
 @allure.story("查询当前用户")
@@ -117,27 +119,33 @@ def test_created_user_in_user_list(headers, created_user):
 	with allure.step("断言用户列表包含新创建的用户"):
 		assert_user_in_list(user_list, created_user_data)
 
-@pytest.mark.parametrize(
-	"case_title, missing_field, expected_status, expected_code",
-	create_user_missing_required_field_data,
-	ids = create_user_missing_required_field_ids,
-)
+
 
 @allure.feature("用户模块")
 @allure.story("创建用户")
 @allure.title("创建用户缺少必填字段")
 @allure.severity(allure.severity_level.NORMAL)
+@pytest.mark.parametrize(
+    "case",
+    create_user_invalid_field_data,
+    ids=create_user_invalid_field_ids,
+)
 @pytest.mark.negative
-def test_create_user_missing_required_field(headers, case_title, missing_field, expected_status, expected_code):
-	"""创建用户缺少必填字段"""
-	allure.dynamic.title(case_title)
+def test_create_user_invalid_field(headers, case):
+	"""创建用户字段非法"""
+	allure.dynamic.title(case["case_desc"])
 
 	with allure.step("准备创建用户测试数据"):
 		create_user_data = build_create_user_data()
 
-	# 删除字段，模拟缺少必填字段
-	with allure.step(f"删除字段：{missing_field}"):
-		create_user_data.pop(missing_field)
+	# 根据测试数据修改请求体
+	with allure.step(case["case_desc"]):
+		if case["action"] == "pop":
+			create_user_data.pop(case["field"])
+		elif case["action"] == "set":
+			create_user_data[case["field"]] = case["value"]
+		else:
+			raise ValueError(f"不支持的 action：{case["action"]}")
 
 	with allure.step("发送创建用户请求"):
 		create_response = create_user(headers, create_user_data)
@@ -145,11 +153,11 @@ def test_create_user_missing_required_field(headers, case_title, missing_field, 
 	attach_response(create_response, "创建用户失败响应")
 
 	with allure.step("断言创建用户失败"):
-		assert_status_code(create_response, expected_status)
+		assert_status_code(create_response, case["expected_status"])
 
 		#body = create_response.json()
 		body = get_json(create_response)
-		assert_business_code(body, expected_code)
+		assert_business_code(body, case["expected_code"])
 
 @allure.feature("用户模块")
 @allure.story("创建用户")
@@ -193,10 +201,18 @@ def test_create_user_without_email(headers):
 @allure.story("创建用户")
 @allure.title("重复 username 创建用户失败")
 @allure.severity(allure.severity_level.NORMAL)
+@pytest.mark.parametrize(
+	"case_title, expected_status, expected_code",
+	create_user_duplicate_username_data,
+	ids=create_user_duplicate_username_ids,
+)
 @pytest.mark.negative
 @pytest.mark.write
-def test_create_user_duplicate_username(headers, created_user):
+def test_create_user_duplicate_username(headers, created_user, case_title, expected_status, expected_code):
 	"""重复 username 创建用户失败"""
+
+	allure.dynamic.title(case_title)
+
 	with allure.step("获取已创建用户数据"):
 		created_user_data = created_user["data"]
 
@@ -210,10 +226,10 @@ def test_create_user_duplicate_username(headers, created_user):
 	attach_response(response, "重复 username 创建用户响应")
 
 	with allure.step("断言重复 username 创建用户失败"):
-		assert_status_code(response, 400)
+		assert_status_code(response, expected_status)
 
 		body =get_json(response)
-		assert_business_code(body, 400)
+		assert_business_code(body, expected_code)
 
 @allure.feature("用户模块")
 @allure.story("删除用户")
@@ -252,23 +268,28 @@ def test_delete_user_success(headers, created_user):
 @allure.story("删除用户")
 @allure.title("删除不存在的用户失败")
 @allure.severity(allure.severity_level.NORMAL)
+@pytest.mark.parametrize(
+    "case",
+    delete_not_exist_user_data,
+    ids=delete_not_exist_user_ids,
+)
 @pytest.mark.negative
 @pytest.mark.write
-def test_delete_not_exist_user(headers):
+def test_delete_not_exist_user(headers, case):
 	"""删除不存在的用户失败"""
 
-	not_exist_user_id = "not-exist-user-id"
+	allure.dynamic.title(case["case_title"])
 
 	with allure.step("发送删除不存在用户接口请求"):
-		delete_response = delete_user(headers, not_exist_user_id)
+		delete_response = delete_user(headers, case["user_id"])
 
 	attach_response(delete_response,"删除不存在用户接口响应")
 
 	with allure.step("断言删除不存在用户失败"):
-		assert_status_code(delete_response, 404)
+		assert_status_code(delete_response, case["expected_status"])
 
 		body = get_json(delete_response)
-		assert_business_code(body, 404)
+		assert_business_code(body, case["expected_code"])
 		assert_data_is_none(body)
 
 @allure.feature("用户模块")
@@ -302,22 +323,28 @@ def test_get_user_by_id_success(headers, created_user):
 @allure.feature("用户模块")
 @allure.story("查询用户详情")
 @allure.title("查询不存在的用户详情失败")
+@pytest.mark.parametrize(
+    "case",
+    get_not_exist_user_by_id_data,
+    ids=get_not_exist_user_by_id_ids,
+)
 @allure.severity(allure.severity_level.NORMAL)
 @pytest.mark.negative
-def test_get_not_exist_user_by_id(headers):
+def test_get_not_exist_user_by_id(headers, case):
 	"""查询不存在的用户详情失败"""
-	not_exist_user_id = "not-exist-user-id"
+
+	allure.dynamic.title(case["case_title"])
 
 	with allure.step("发送查询不存在用户详情接口请求"):
-		response = get_user_by_id(headers, not_exist_user_id)
+		response = get_user_by_id(headers, case["user_id"])
 
 	attach_response(response, "查询不存在用户详情接口响应")
 
 	with allure.step("断言查询不存在用户详情失败"):
-		assert_status_code(response, 404)
+		assert_status_code(response, case["expected_status"])
 
 		body = get_json(response)
-		assert_business_code(body, 404)
+		assert_business_code(body, case["expected_code"])
 		assert_data_is_none(body)
 
 @allure.feature("用户模块")
@@ -378,15 +405,22 @@ def test_update_user_email_and_password_success(headers, created_user):
 @allure.story("更新用户")
 @allure.title("更新用户名不生效")
 @allure.severity(allure.severity_level.NORMAL)
+@pytest.mark.parametrize(
+    "case",
+    update_username_ignored_data,
+    ids=update_username_ignored_ids,
+)
 @pytest.mark.write
-def test_update_username_failed(headers, created_user):
+def test_update_username_failed(headers, created_user, case):
 	"""更新用户名不生效"""
+	allure.dynamic.title(case["case_title"])
+
 	create_user_data = created_user["data"]
 	user_id = create_user_data["id"]
 	old_username = create_user_data["username"]
 
 	update_user_data = {
-		"username": "new_username_not_allowed",
+		"username": case["new_username"],
 	}
 
 	with allure.step("发送更新用户名请求接口"):
@@ -395,10 +429,10 @@ def test_update_username_failed(headers, created_user):
 	attach_response(update_response, "更新用户名接口响应")
 
 	with allure.step("断言更新用户名请求返回成功"):
-		assert_status_code(update_response, 200)
+		assert_status_code(update_response, case["expected_status"])
 
 		body = get_json(update_response)
-		assert_business_code(body, 200)
+		assert_business_code(body, case["expected_code"])
 
 	with allure.step("查询用户详情，确认用户名未变化"):
 		detail_response = get_user_by_id(headers, user_id)
@@ -418,28 +452,34 @@ def test_update_username_failed(headers, created_user):
 @allure.story("更新用户")
 @allure.title("更新不存在的用户失败")
 @allure.severity(allure.severity_level.NORMAL)
+@pytest.mark.parametrize(
+	"case",
+	update_not_exist_user_data,
+	ids=update_not_exist_user_ids,
+)
 @pytest.mark.negative
 @pytest.mark.write
-def test_update_not_exist_user_failed(headers):
+def test_update_not_exist_user_failed(headers, case):
 	"""更新不存在的用户失败"""
 
-	not_exist_user_id = "not-exist-user-id"
+	allure.dynamic.title(case["case_title"])
+
 	new_email = build_create_user_data()["email"]
 
 	update_user_data = {
 		"email": new_email,
-		"password": "Bb123456",
+		"password": case["password"],
 	}
 
 	with allure.step("发送更新不存在用户接口请求"):
-		update_response = update_user(headers, not_exist_user_id, update_user_data)
+		update_response = update_user(headers, case["user_id"], update_user_data)
 
 	attach_response(update_response, "更新不存在用户接口响应")
 
 	with allure.step("断言更新不存在用户失败"):
-		assert_status_code(update_response, 404)
+		assert_status_code(update_response, case["expected_status"])
 
 		body = get_json(update_response)
-		assert_business_code(body, 404)
+		assert_business_code(body, case["expected_code"])
 		assert_data_is_none(body)
 
