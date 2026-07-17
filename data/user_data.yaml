@@ -1,0 +1,71 @@
+create_user_invalid_field:
+  - id: missing_username
+    case_title: 创建用户失败-缺少用户名
+    action: pop
+    field: username
+    value: null
+    case_desc: 删除 username 字段
+    expected_status: 400
+    expected_code: 400
+
+  - id: missing_password
+    case_title: 创建用户失败-缺少密码
+    action: pop
+    field: password
+    value: null
+    case_desc: 删除 password 字段
+    expected_status: 400
+    expected_code: 400
+
+  - id: empty_username
+    case_title: 创建用户失败-用户名为空
+    action: set
+    field: username
+    value: ""
+    case_desc: 将 username 设置为空字符串
+    expected_status: 400
+    expected_code: 400
+
+  - id: empty_password
+    case_title: 创建用户失败-密码为空
+    action: set
+    field: password
+    value: ""
+    case_desc: 将 password 设置为空字符串
+    expected_status: 400
+    expected_code: 400
+
+get_not_exist_user_by_id:
+  - id: get_not_exist_user_by_id
+    case_title: 查询不存在的用户详情失败
+    user_id: not-exist-user-id
+    expected_status: 404
+    expected_code: 404
+
+delete_not_exist_user:
+  - id: delete_not_exist_user
+    case_title: 删除不存在的用户失败
+    user_id: not_exist_user_id
+    expected_status: 404
+    expected_code: 404
+
+update_username_ignored:
+  - id: update_username_ignored
+    case_title: 更新用户名不生效
+    new_username: new_username_not_allowed
+    expected_status: 200
+    expected_code: 200
+
+update_not_exist_user:
+  - id: update_not_exist_user
+    case_title: 更新不存在的用户失败
+    user_id: not_exist_user_id
+    password: Bb123456
+    expected_status: 404
+    expected_code: 404
+
+create_user_duplicate_username:
+  - id: create_user_duplicate_username
+    case_title: 重复 username 创建用户失败
+    expected_status: 400
+    expected_code: 400

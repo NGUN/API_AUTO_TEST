@@ -202,16 +202,16 @@ def test_create_user_without_email(headers):
 @allure.title("重复 username 创建用户失败")
 @allure.severity(allure.severity_level.NORMAL)
 @pytest.mark.parametrize(
-	"case_title, expected_status, expected_code",
+	"case",
 	create_user_duplicate_username_data,
 	ids=create_user_duplicate_username_ids,
 )
 @pytest.mark.negative
 @pytest.mark.write
-def test_create_user_duplicate_username(headers, created_user, case_title, expected_status, expected_code):
+def test_create_user_duplicate_username(headers, created_user, case):
 	"""重复 username 创建用户失败"""
 
-	allure.dynamic.title(case_title)
+	allure.dynamic.title(case["case_title"])
 
 	with allure.step("获取已创建用户数据"):
 		created_user_data = created_user["data"]
@@ -226,10 +226,11 @@ def test_create_user_duplicate_username(headers, created_user, case_title, expec
 	attach_response(response, "重复 username 创建用户响应")
 
 	with allure.step("断言重复 username 创建用户失败"):
-		assert_status_code(response, expected_status)
+		assert_status_code(response, case["expected_status"])
+		body = get_json(response)
 
 		body =get_json(response)
-		assert_business_code(body, expected_code)
+		assert_business_code(body, case["expected_code"])
 
 @allure.feature("用户模块")
 @allure.story("删除用户")
@@ -482,4 +483,68 @@ def test_update_not_exist_user_failed(headers, case):
 		body = get_json(update_response)
 		assert_business_code(body, case["expected_code"])
 		assert_data_is_none(body)
+
+@allure.feature("用户模块")
+@allure.story("用户 CRUD 链路")
+@allure.title("用户 CRUD 完整链路成功")
+@allure.severity(allure.severity_level.CRITICAL)
+@pytest.mark.smoke
+@pytest.mark.write
+def test_user_crud_flow(headers):
+	"""用户 CRUD 完整链路成功"""
+
+	user_id = None
+
+	try:
+		with allure.step("创建用户"):
+			#1.准备创建用户数据
+			create_user_data = build_create_user_data()
+
+			#2.调用创建用户接口
+			create_response = create_user(headers, create_user_data)
+
+			#3.把响应附加到 Allure
+			attach_response(create_response, "CRUD 链路-创建用户响应")
+
+			#4.断言创建成功
+			assert_status_code(create_response, 200)
+
+			create_body = get_json(create_response)
+			assert_business_code(create_body, 200)
+			assert_data_not_none(create_body)
+
+			#5.提取 user_id
+			created_user = create_body["data"]
+			user_id = created_user["id"]
+
+		with allure.step("查询用户详情"):
+			#1、调用查询详情接口
+			detail_response = get_user_by_id(headers, user_id)
+
+			#2、附加响应到 Allure
+			attach_response(detail_response, "CRUD 链路-查询用户详情响应")
+
+			#3、断言查询成功
+			assert_status_code(detail_response, 200)
+			detail_body = get_json(detail_response)
+			assert_business_code(detail_body, 200)
+
+			#4、断言查询到的是刚创建的用户
+			detail_user = detail_body["data"]
+			assert detail_user["username"] == created_user["username"]
+			assert detail_user["email"] == created_user["email"]
+			assert detail_user["id"] == created_user["id"]
+
+		with allure.step("更新用户邮箱和密码"):
+			pass
+
+		with allure.step("再次查询用户详情，确认更新生效"):
+			pass
+
+	finally:
+		if user_id is not None:
+			delete_response = delete_user(headers, user_id)
+			attach_response(delete_response, "CRUD 链路-后置清理删除用户响应")
+			assert delete_response.status_code in [200,404]
+
 
