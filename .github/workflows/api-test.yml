@@ -91,12 +91,28 @@ jobs:
           mkdir -p reports
           pytest -q --html=reports/report.html --self-contained-html --alluredir=reports/allure-results --clean-alluredir
           
+      - name: Install Allure commandline
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test' }}
+        run: npm install -g allure-commandline
+
+      - name: Generate Allure html report
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test' }}
+        run: allure generate reports/allure-results -o reports/allure-report --clean
+          
       - name: Upload allure results
         if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test' }}
         uses: actions/upload-artifact@v6
         with:
           name: allure-results
           path: reports/allure-results
+          if-no-files-found: warn
+
+      - name: Upload Allure html report
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: allure-html-report
+          path: reports/allure-report
           if-no-files-found: warn
 
       - name: Upload collect result
