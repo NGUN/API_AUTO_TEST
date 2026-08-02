@@ -54,7 +54,16 @@ jobs:
 
       - name: Collect pytest cases
         if: github.event_name != 'workflow_dispatch' || inputs.run_mode == 'collect'
-        run: pytest --collect-only -q > collect-result.txt
+        run: |
+          if [ "${{ github.event_name }}" != "workflow_dispatch" ] || [ "${{ inputs.marker }}" = "all" ]; then
+            MARKER_EXPR=""
+          elif [ "${{ inputs.marker }}" = "not_write" ]; then
+            MARKER_EXPR="-m 'not write'"
+          else
+            MARKER_EXPR="-m ${{ inputs.marker }}"
+          fi
+
+          pytest --collect-only -q $MARKER_EXPR > collect-result.txt
 
       - name: Check required secrets
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test' }}
