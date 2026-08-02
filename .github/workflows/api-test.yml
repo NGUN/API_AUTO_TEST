@@ -99,8 +99,9 @@ jobs:
           path: collect-result.txt
 
       - name: Upload pytest html report
-        if: github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test'
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test' }}
         uses: actions/upload-artifact@v6
         with:
           name: pytest-html-report
           path: reports/report.html
+          if-no-files-found: warn
