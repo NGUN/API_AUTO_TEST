@@ -89,7 +89,15 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME || 'demo_project' }}
         run: |
           mkdir -p reports
-          pytest -q --html=reports/report.html --self-contained-html
+          pytest -q --html=reports/report.html --self-contained-html --alluredir=reports/allure-results --clean-alluredir
+          
+      - name: Upload allure results
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: allure-results
+          path: reports/allure-results
+          if-no-files-found: warn
 
       - name: Upload collect result
         if: github.event_name != 'workflow_dispatch' || inputs.run_mode == 'collect'
