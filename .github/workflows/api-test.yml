@@ -55,15 +55,17 @@ jobs:
       - name: Collect pytest cases
         if: github.event_name != 'workflow_dispatch' || inputs.run_mode == 'collect'
         run: |
-          if [ "${{ github.event_name }}" != "workflow_dispatch" ] || [ "${{ inputs.marker }}" = "all" ]; then
-            MARKER_EXPR=""
-          elif [ "${{ inputs.marker }}" = "not_write" ]; then
-            MARKER_EXPR="-m 'not write'"
-          else
-            MARKER_EXPR="-m ${{ inputs.marker }}"
+          PYTEST_MARKER_ARGS=()
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.marker }}" = "not_write" ]; then
+              PYTEST_MARKER_ARGS=(-m "not write")
+            elif [ "${{ inputs.marker }}" != "all" ]; then
+              PYTEST_MARKER_ARGS=(-m "${{ inputs.marker }}")
+            fi
           fi
 
-          pytest --collect-only -q $MARKER_EXPR > collect-result.txt
+          pytest --collect-only -q "${PYTEST_MARKER_ARGS[@]}" > collect-result.txt
 
       - name: Check required secrets
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test' }}
@@ -139,15 +141,15 @@ jobs:
         run: |
           mkdir -p reports
 
-          if [ "${{ inputs.marker }}" = "all" ]; then
-            MARKER_EXPR=""
-          elif [ "${{ inputs.marker }}" = "not_write" ]; then
-            MARKER_EXPR="-m 'not write'"
-          else
-            MARKER_EXPR="-m ${{ inputs.marker }}"
+          PYTEST_MARKER_ARGS=()
+
+          if [ "${{ inputs.marker }}" = "not_write" ]; then
+            PYTEST_MARKER_ARGS=(-m "not write")
+          elif [ "${{ inputs.marker }}" != "all" ]; then
+            PYTEST_MARKER_ARGS=(-m "${{ inputs.marker }}")
           fi
 
-          pytest -q $MARKER_EXPR --html=reports/report.html --self-contained-html --alluredir=reports/allure-results --clean-alluredir
+          pytest -q "${PYTEST_MARKER_ARGS[@]}" --html=reports/report.html --self-contained-html --alluredir=reports/allure-results --clean-alluredir
           
       - name: Install Allure commandline
         if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test' }}
