@@ -87,7 +87,9 @@ jobs:
           DB_USER: ${{ secrets.DB_USER || 'root' }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD || '123456' }}
           DB_NAME: ${{ secrets.DB_NAME || 'demo_project' }}
-        run: pytest -q > pytest-result.txt
+        run: |
+          mkdir -p reports
+          pytest -q --html=reports/report.html --self-contained-html
 
       - name: Upload collect result
         if: github.event_name != 'workflow_dispatch' || inputs.run_mode == 'collect'
@@ -96,9 +98,9 @@ jobs:
           name: pytest-collect-result
           path: collect-result.txt
 
-      - name: Upload pytest result
+      - name: Upload pytest html report
         if: github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test'
         uses: actions/upload-artifact@v6
         with:
-          name: pytest-result
-          path: pytest-result.txt
+          name: pytest-html-report
+          path: reports/report.html
