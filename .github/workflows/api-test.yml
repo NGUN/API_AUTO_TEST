@@ -10,6 +10,15 @@ on:
       - main
       - master
   workflow_dispatch:
+    inputs:
+      run_mode:
+        description: "Run mode"
+        required: true
+        default: "collect"
+        type: choice
+        options:
+          - collect
+          - test
 
 permissions:
   contents: read
@@ -34,10 +43,23 @@ jobs:
           pip install -r requirements.txt
 
       - name: Collect pytest cases
+        if: github.event_name != 'workflow_dispatch' || inputs.run_mode == 'collect'
         run: pytest --collect-only -q > collect-result.txt
 
+      - name: Run pytest cases
+        if: github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test'
+        run: pytest -q > pytest-result.txt
+
       - name: Upload collect result
+        if: github.event_name != 'workflow_dispatch' || inputs.run_mode == 'collect'
         uses: actions/upload-artifact@v4
         with:
           name: pytest-collect-result
           path: collect-result.txt
+
+      - name: Upload pytest result
+        if: github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-result
+          path: pytest-result.txt
