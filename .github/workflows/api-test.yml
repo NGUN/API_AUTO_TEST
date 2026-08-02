@@ -46,8 +46,47 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || inputs.run_mode == 'collect'
         run: pytest --collect-only -q > collect-result.txt
 
+      - name: Check API service
+        if: github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test'
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL || 'http://127.0.0.1:11011' }}
+        run: |
+          python - <<'PY'
+          import os
+          import socket
+          from urllib.parse import urlparse
+
+          base_url = os.getenv("API_BASE_URL")
+          parsed = urlparse(base_url)
+
+          host = parsed.hostname
+          port = parsed.port or (443 if parsed.scheme == "https" else 80)
+
+          print(f"Checking API service: {host}:{port}")
+
+          try:
+              with socket.create_connection((host, port), timeout=5):
+                  print("API service is reachable")
+          except OSError as e:
+              raise SystemExit(
+                  f"API service is not reachable: {base_url}\n"
+                  f"Reason: {e}\n"
+                  "Please start the API service or configure secrets.API_BASE_URL."
+              )
+          PY
+
       - name: Run pytest cases
         if: github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test'
+        env:
+          ENV: test
+          API_BASE_URL: ${{ secrets.API_BASE_URL || 'http://127.0.0.1:11011' }}
+          API_USERNAME: ${{ secrets.API_USERNAME || 'admin' }}
+          API_PASSWORD: ${{ secrets.API_PASSWORD || 'admin123' }}
+          DB_HOST: ${{ secrets.DB_HOST || '127.0.0.1' }}
+          DB_PORT: ${{ secrets.DB_PORT || '3306' }}
+          DB_USER: ${{ secrets.DB_USER || 'root' }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD || '123456' }}
+          DB_NAME: ${{ secrets.DB_NAME || 'demo_project' }}
         run: pytest -q > pytest-result.txt
 
       - name: Upload collect result

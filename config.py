@@ -17,7 +17,7 @@ if env not in env_config:
     raise ValueError(f"未知环境: {env}")
 
 current_config = env_config[env]
-base_url = current_config["base_url"]
+base_url = os.getenv("API_BASE_URL", current_config["base_url"])
 
 login_url = base_url + "/auth/login"
 current_user_url = base_url + "/api/v1/user"
