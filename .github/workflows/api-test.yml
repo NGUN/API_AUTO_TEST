@@ -52,14 +52,14 @@ jobs:
 
       - name: Upload collect result
         if: github.event_name != 'workflow_dispatch' || inputs.run_mode == 'collect'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: pytest-collect-result
           path: collect-result.txt
 
       - name: Upload pytest result
         if: github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: pytest-result
           path: pytest-result.txt
