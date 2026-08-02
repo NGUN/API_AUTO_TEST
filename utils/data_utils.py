@@ -2,7 +2,7 @@ import time
 
 def build_create_user_data():
     """生成创建用户接口需要的动态数据"""
-    now = int(time.time())
+    now = time.time_ns()
 
     return {
         "username": f"xiaoyitest{now}",

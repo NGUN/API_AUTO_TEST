@@ -12,6 +12,8 @@ venv/
 # 测试报告
 reports/
 allure-results/
+allure-results-local/
+%ALLURE_RESULTS_DIR%/
 
 # IDE 配置
 .idea/

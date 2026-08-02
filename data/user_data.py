@@ -38,6 +38,12 @@ update_not_exist_user_ids = [
     case["id"] for case in update_not_exist_user_data
 ]
 
+update_user_without_token_data = yaml_data["update_user_without_token"]
+
+update_user_without_token_ids = [
+    case["id"] for case in update_user_without_token_data
+]
+
 # 删除用户相关数据
 delete_not_exist_user_data = yaml_data["delete_not_exist_user"]
 

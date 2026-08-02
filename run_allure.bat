@@ -1,9 +1,13 @@
 @echo off
 
-if exist reports\allure-results (
-    rmdir /s /q reports\allure-results
+set ALLURE_RESULTS_DIR=reports\allure-results
+
+pytest --alluredir=%ALLURE_RESULTS_DIR% --clean-alluredir
+
+if errorlevel 1 (
+    echo.
+    echo pytest 执行失败，不启动 Allure 报告。
+    exit /b 1
 )
 
-pytest --alluredir=reports/allure-results
-
-allure serve reports/allure-results
+allure serve %ALLURE_RESULTS_DIR%

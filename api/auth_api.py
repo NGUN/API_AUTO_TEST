@@ -1,4 +1,3 @@
-import requests
 from config import login_url
 from utils.request_utils import send_request
 

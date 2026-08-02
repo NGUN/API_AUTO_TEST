@@ -1,0 +1,40 @@
+login_cases:
+  - id: login_success
+    case_title: 正确账号密码登录成功
+    username: ${API_USERNAME}
+    password: ${API_PASSWORD}
+    expected_status: 200
+    expected_code: 200
+    expected_data: not_none
+
+  - id: login_wrong_password
+    case_title: 错误密码登录失败
+    username: admin
+    password: wrong123
+    expected_status: 401
+    expected_code: 401
+    expected_data: none
+
+  - id: login_empty_username
+    case_title: 空账号登录失败
+    username: ""
+    password: admin123
+    expected_status: 400
+    expected_code: 400
+    expected_data: none
+
+  - id: login_empty_password
+    case_title: 空密码登录失败
+    username: admin
+    password: ""
+    expected_status: 400
+    expected_code: 400
+    expected_data: none
+
+  - id: login_wrong_username
+    case_title: 错误账号登录失败
+    username: wrong_admin
+    password: admin123
+    expected_status: 401
+    expected_code: 401
+    expected_data: none
