@@ -46,6 +46,36 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || inputs.run_mode == 'collect'
         run: pytest --collect-only -q > collect-result.txt
 
+      - name: Check required secrets
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test' }}
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          API_USERNAME: ${{ secrets.API_USERNAME }}
+          API_PASSWORD: ${{ secrets.API_PASSWORD }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          if [ -z "$API_BASE_URL" ]; then
+            echo "::error::Missing secret: API_BASE_URL"
+            exit 1
+          fi
+
+          if [ -z "$API_USERNAME" ]; then
+            echo "::error::Missing secret: API_USERNAME"
+            exit 1
+          fi
+
+          if [ -z "$API_PASSWORD" ]; then
+            echo "::error::Missing secret: API_PASSWORD"
+            exit 1
+          fi
+
+          if [ -z "$DB_PASSWORD" ]; then
+            echo "::error::Missing secret: DB_PASSWORD"
+            exit 1
+          fi
+
+          echo "Required secrets are configured"
+
       - name: Check API service
         if: github.event_name == 'workflow_dispatch' && inputs.run_mode == 'test'
         env:
