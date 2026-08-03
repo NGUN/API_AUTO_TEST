@@ -547,3 +547,5 @@ run_html_report.bat
 - 如果接口契约变化，需要同步调整 YAML 中的预期状态码、业务 code 和 data 预期
 - Allure 报告如果出现历史失败记录，需要使用 `--clean-alluredir` 清理旧结果
 - CMD 使用 `%变量名%` 读取环境变量，PowerShell 使用 `$env:变量名`
+
+CI pull_request trigger demo
