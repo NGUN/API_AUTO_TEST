@@ -36,13 +36,13 @@ pipeline {
         PYTHONIOENCODING = 'utf-8'
     }
 
-    stage('Marker') {
-        steps {
-            echo 'Loaded from SCM Jenkinsfile'
-        }
-    }
-
     stages {
+        stage('Marker') {
+            steps {
+                echo 'Loaded from SCM Jenkinsfile'
+            }
+        }
+
         stage('Checkout') {
             steps {
                 git branch: 'main',
