@@ -15,6 +15,9 @@ allure-results/
 allure-results-local/
 %ALLURE_RESULTS_DIR%/
 
+# 个人简历
+简历2026—万会玲_*.docx
+
 # IDE 配置
 .idea/
 
