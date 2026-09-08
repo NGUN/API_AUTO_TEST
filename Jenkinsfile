@@ -45,9 +45,12 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    credentialsId: 'github_token',
-                    url: 'https://github.com/NGUN/API_AUTO_TEST.git'
+                retry(count:3) {
+                    git branch: 'main',
+                        credentialsId: 'github_token',
+                        url: 'https://github.com/NGUN/API_AUTO_TEST.git',
+                        depth: 1
+                }
             }
         }
 
