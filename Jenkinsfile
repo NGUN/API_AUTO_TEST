@@ -46,10 +46,23 @@ pipeline {
         stage('Checkout') {
             steps {
                 retry(count:3) {
-                    git branch: 'main',
-                        credentialsId: 'github_token',
-                        url: 'https://github.com/NGUN/API_AUTO_TEST.git',
-                        depth: 1
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: '*/main']],
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [[
+                            $class: 'CloneOption',
+                            depth: 1,
+                            noTags: false,
+                            reference: '',
+                            shallow: true
+                        ]],
+                        submoduleCfg: [],
+                        userRemoteConfigs: [[
+                            credentialsId: 'github_token',
+                            url: 'https://github.com/NGUN/API_AUTO_TEST.git'
+                        ]]
+                    ])
                 }
             }
         }
